@@ -1,75 +1,27 @@
-# React + TypeScript + Vite
+# Módulo 8 - Cloud: Azure con Docker y GitHub Actions
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+App Vite + React + TypeScript empaquetada con Docker y desplegada en Azure App Service con GitHub Actions.
 
-Currently, two official plugins are available:
+## Enlaces
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **App desplegada:** modulo08-cloud-azure-danivegi-dvazasekh8eje8hm.spaincentral-01.azurewebsites.net
+- **Imagen en GitHub Container Registry:** https://github.com/danivegi/modulo08-cloud-azure/pkgs/container/modulo08-cloud-azure
 
-## React Compiler
+> La primera carga puede tardar un poco si el contenedor estaba detenido.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Cómo se despliega
 
-## Expanding the ESLint configuration
+Cada merge a `main` ejecuta el workflow `.github/workflows/deploy.yml`, que tiene dos jobs:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. **build:** construye la imagen con el `Dockerfile` (multi-stage: build con Node y servido con Nginx) y la publica en GitHub Container Registry (GHCR) con los tags `latest` y el hash del commit.
+2. **deploy:** con `azure/webapps-deploy`, indica a la Web App que despliegue la imagen del commit actual.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Infraestructura en Azure
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- Azure App Service (Web App para contenedores Linux), plan gratuito F1.
+- Imagen pública en GHCR, sin credenciales de registro.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Credenciales del workflow
 
-```
-
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
+- `GITHUB_TOKEN`: lo genera GitHub automáticamente y se usa para publicar en GHCR.
+- `AZURE_WEBAPP_PUBLISH_PROFILE`: secret del repositorio con el perfil de publicación de la Web App.
